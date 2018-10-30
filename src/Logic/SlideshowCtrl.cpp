@@ -1,5 +1,7 @@
 #include "SlideshowCtrl.h"
 
+#include <QDir>
+
 #include "Obs/Holder.h"
 #include "Obs/Observer.h"
 
@@ -35,6 +37,10 @@ SlideshowCtrl::SlideshowCtrl(std::shared_ptr<SlideCtrl> slideCtrl)
     , m_observer{std::make_shared<SlideshowCtrl::Observer>(*this)}
 {
     m_slideCtrl->attach(m_observer);
+    const auto imageFolder = QDir::currentPath() + QDir::separator() + "images" + QDir::separator();
+    const auto files = QDir(imageFolder).entryList(); // I can add filter for images only here.
+    for (const auto & file : files)
+        m_slideCtrl->addSlide(QRect(), imageFolder + file);
 }
 
 SlideshowCtrl::~SlideshowCtrl()
