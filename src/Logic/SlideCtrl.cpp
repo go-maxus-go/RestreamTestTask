@@ -10,6 +10,8 @@
 namespace Logic
 {
 
+static int s_thumbnailSize = 90;
+
 SlideCtrl::SlideCtrl()
     : m_obsHolder(std::make_unique<Obs::Holder<Model::Slide>>())
 {}
@@ -21,6 +23,9 @@ bool SlideCtrl::addSlide(QRect rect, QString path)
     auto image = std::make_shared<QImage>();
     if (!image->load(path))
         return false;
+    *image = image->width() > image->height()
+        ? image->scaledToWidth(s_thumbnailSize)
+        : image->scaledToHeight(s_thumbnailSize);
 
     auto slide = std::make_shared<Model::Slide>(
         std::move(rect),
@@ -33,11 +38,11 @@ bool SlideCtrl::addSlide(QRect rect, QString path)
     return true;
 }
 
-void SlideCtrl::attach(ObsPtr obs)
+void SlideCtrl::attach(Obs::SlideObsPtr obs)
 {
     m_obsHolder->attach(obs);
 }
-void SlideCtrl::detach(ObsPtr obs)
+void SlideCtrl::detach(Obs::SlideObsPtr obs)
 {
     m_obsHolder->detach(obs);
 }

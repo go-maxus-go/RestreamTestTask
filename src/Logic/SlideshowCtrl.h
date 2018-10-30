@@ -5,7 +5,7 @@
 #include "Obs/Fwd.h"
 #include "Model/Fwd.h"
 
-#include "SlideCtrl.h"
+#include "Fwd.h"
 
 
 namespace Obs { template<class T> class Holder; }
@@ -18,8 +18,13 @@ class SlideCtrl;
 class SlideshowCtrl
 {
 public:
-    SlideshowCtrl(std::shared_ptr<SlideCtrl> slideController);
+    SlideshowCtrl(SlideCtrlPtr slideController);
     ~SlideshowCtrl();
+
+    void attach(Obs::SlideshowObsPtr);
+    void detach(Obs::SlideshowObsPtr);
+
+    void loadSlideshow();
 
 private:
     Model::SlideshowPtr m_slideshow;

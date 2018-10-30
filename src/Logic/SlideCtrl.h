@@ -18,7 +18,6 @@ namespace Logic
 
 class SlideCtrl
 {
-    using ObsPtr = std::shared_ptr<Obs::Observer<Model::Slide>>;
 public:
     SlideCtrl();
     ~SlideCtrl();
