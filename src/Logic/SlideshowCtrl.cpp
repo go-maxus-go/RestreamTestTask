@@ -23,6 +23,10 @@ protected:
     void created(Model::SlidePtrC object) override
     {
         m_ctrl.m_slideshow->slides.push_back(object);
+        m_ctrl.m_obsHolder->notifyCreated(m_ctrl.m_slideshow);
+    }
+    void updated(Model::SlidePtrC) override
+    {
         m_ctrl.m_obsHolder->notifyUpdated(m_ctrl.m_slideshow);
     }
 

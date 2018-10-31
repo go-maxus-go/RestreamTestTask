@@ -19,7 +19,7 @@ public:
     ~MainWindow();
 
 private:
-    Ui::MainWindow * ui;
+    std::unique_ptr<Ui::MainWindow> m_ui;
     class Observer;
     std::shared_ptr<Observer> m_observer;
     Logic::SlideshowCtrlPtr m_slideshowCtrl;

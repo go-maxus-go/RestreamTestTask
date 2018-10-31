@@ -26,6 +26,7 @@ public:
                 auto label = new QLabel(m_base.centralWidget());
                 label->setPixmap(QPixmap::fromImage(*slide->image));
                 label->setGeometry(slide->rect);
+                label->setVisible(true);
                 m_slide2label[slide] = label;
             }
         }
@@ -38,16 +39,16 @@ private:
 
 MainWindow::MainWindow(Logic::SlideshowCtrlPtr slideshowCtrl, QWidget * parent)
     : QMainWindow{parent}
-    , ui{new Ui::MainWindow}
+    , m_ui{std::make_unique<Ui::MainWindow>()}
     , m_observer{std::make_shared<Observer>(*this)}
     , m_slideshowCtrl{std::move(slideshowCtrl)}
 {
-    ui->setupUi(this);
+    m_ui->setupUi(this);
     m_slideshowCtrl->attach(m_observer);
     m_slideshowCtrl->loadSlideshow();
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    m_slideshowCtrl->detach(m_observer);
 }

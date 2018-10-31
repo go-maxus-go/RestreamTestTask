@@ -23,7 +23,7 @@ struct Slide
     QRect rect;
     QString path;
     std::shared_ptr<const QImage> image;
-    enum class State { Added, Loading, Ready } state = State::Added;
+    enum class State { Added, Loading, Ready, Failed} state = State::Added;
 };
 
 } // namespace Model
