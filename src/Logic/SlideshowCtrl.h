@@ -32,6 +32,7 @@ private:
     std::unique_ptr<Obs::Holder<Model::Slideshow>> m_obsHolder;
     class Observer;
     std::shared_ptr<Observer> m_observer;
+    const int m_defaultSlideSize = 100;
 };
 
 } // namespace Logic

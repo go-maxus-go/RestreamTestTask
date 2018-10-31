@@ -1,5 +1,7 @@
 #include "SlideshowCtrl.h"
 
+#include <random>
+
 #include <QDir>
 
 #include "Obs/Holder.h"
@@ -9,6 +11,7 @@
 #include "Model/Slideshow.h"
 
 #include "SlideCtrl.h"
+
 
 namespace Logic
 {
@@ -23,11 +26,6 @@ protected:
     void created(Model::SlidePtrC object) override
     {
         m_ctrl.m_slideshow->slides.push_back(object);
-        m_ctrl.m_obsHolder->notifyUpdated(m_ctrl.m_slideshow);
-    }
-    void updated(Model::SlidePtrC) override
-    {
-        m_ctrl.m_obsHolder->notifyUpdated(m_ctrl.m_slideshow);
     }
 
 private:
@@ -65,11 +63,42 @@ void SlideshowCtrl::loadSlideshow()
     const auto files = QDir(imageFolder).entryList(
         QDir::Filter::Files | QDir::Filter::NoDotAndDotDot);
 
-    QRect rect(0, 0, 100, 100);
-    for (const auto & file : files) {
-        m_slideCtrl->addSlide(rect, imageFolder + file);
-        rect.moveCenter(rect.center() + QPoint(rect.width(), 0));
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> randomX(0, m_slideshow->width - m_defaultSlideSize);
+    std::uniform_int_distribution<> randomY(0, m_slideshow->height - m_defaultSlideSize);
+
+    auto randomRect = [this, &randomX, &randomY, &gen]() -> std::pair<QRect, bool>
+    {
+        // use 1000 trials to generate new rect
+        // I know this is not the best way to solve the problem
+        for (int i = 0; i < 1000; ++i)
+        {
+            const QRect rect(randomX(gen), randomY(gen), m_defaultSlideSize, m_defaultSlideSize);
+            bool isIntersection = false;
+            for (const auto & slide : m_slideshow->slides)
+            {
+                if (slide->rect.intersects(rect))
+                {
+                    isIntersection = true;
+                    break;
+                }
+            }
+            if (!isIntersection)
+                return {rect, true};
+        }
+        return {QRect(), false};
+    };
+
+    for (const auto & file : files)
+    {
+        const auto rectResult = randomRect();
+        if (!rectResult.second)
+            break;
+        m_slideCtrl->addSlide(rectResult.first, imageFolder + file);
     }
+
+    m_obsHolder->notifyUpdated(m_slideshow);
 }
 
 } // namespace Logic
