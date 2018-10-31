@@ -33,8 +33,13 @@ public:
     void attach(Obs::SlideObsPtr);
     void detach(Obs::SlideObsPtr);
 
+    void selectTop();
     void selectLeft();
     void selectRight();
+    void selectBottom();
+
+private:
+    void moveSelection(Model::SlidePtr from, Model::SlidePtr to);
 
 private slots:
     void processLoadedImage(bool result);

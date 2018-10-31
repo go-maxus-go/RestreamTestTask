@@ -112,6 +112,12 @@ void MainWindow::keyPressEvent(QKeyEvent * e)
 {
     switch (e->key())
     {
+    case Qt::Key_Up:
+        m_slideCtrl->selectTop();
+        break;
+    case Qt::Key_Down:
+        m_slideCtrl->selectBottom();
+        break;
     case Qt::Key_Left:
         m_slideCtrl->selectLeft();
         break;
