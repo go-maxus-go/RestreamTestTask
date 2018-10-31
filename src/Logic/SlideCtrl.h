@@ -33,6 +33,9 @@ public:
     void attach(Obs::SlideObsPtr);
     void detach(Obs::SlideObsPtr);
 
+    void selectLeft();
+    void selectRight();
+
 private slots:
     void processLoadedImage(bool result);
 
