@@ -15,6 +15,10 @@ public:
     Observer(MainWindow & base) : m_base{base}
     {}
 
+    void created(Model::SlideshowPtrC slideshow) override
+    {
+        m_base.setGeometry(0, 0, slideshow->width, slideshow->height);
+    }
     void updated(Model::SlideshowPtrC slideshow) override
     {
         for (const auto & slide : slideshow->slides)

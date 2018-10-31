@@ -23,7 +23,7 @@ protected:
     void created(Model::SlidePtrC object) override
     {
         m_ctrl.m_slideshow->slides.push_back(object);
-        m_ctrl.m_obsHolder->notifyCreated(m_ctrl.m_slideshow);
+        m_ctrl.m_obsHolder->notifyUpdated(m_ctrl.m_slideshow);
     }
     void updated(Model::SlidePtrC) override
     {
@@ -35,8 +35,7 @@ private:
 };
 
 SlideshowCtrl::SlideshowCtrl(SlideCtrlPtr slideCtrl)
-    : m_slideshow{std::make_shared<Model::Slideshow>()}
-    , m_slideCtrl{std::move(slideCtrl)}
+    : m_slideCtrl{std::move(slideCtrl)}
     , m_obsHolder{std::make_unique<Obs::Holder<Model::Slideshow>>()}
     , m_observer{std::make_shared<SlideshowCtrl::Observer>(*this)}
 {
@@ -59,6 +58,9 @@ void SlideshowCtrl::detach(Obs::SlideshowObsPtr obs)
 
 void SlideshowCtrl::loadSlideshow()
 {
+    m_slideshow = std::make_shared<Model::Slideshow>();
+    m_obsHolder->notifyCreated(m_slideshow);
+
     const auto imageFolder = QDir::currentPath() + QDir::separator() + "images" + QDir::separator();
     const auto files = QDir(imageFolder).entryList(
         QDir::Filter::Files | QDir::Filter::NoDotAndDotDot);

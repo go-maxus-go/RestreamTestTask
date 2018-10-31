@@ -9,8 +9,8 @@ namespace Model
 
 struct Slideshow
 {
-    int width;
-    int height;
+    int width = 1280; // hardcode =(
+    int height = 720;
     std::vector<SlidePtrC> slides;
 };
 
