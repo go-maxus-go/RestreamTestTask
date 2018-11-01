@@ -13,10 +13,13 @@
 #include "Selector.h"
 
 
-class MainWindow::Observer : public Obs::SlideshowObs, public Obs::SlideObs
+namespace Gui
+{
+
+class MainWindow::Impl : public Obs::SlideshowObs, public Obs::SlideObs
 {
 public:
-    Observer(MainWindow & base) : m_base{base}
+    Impl(MainWindow & base) : m_base{base}
     {
         m_slide2selector.second = nullptr;
     }
@@ -29,25 +32,25 @@ public:
     void created(Model::SlidePtrC slide) override
     {
         auto label = new QLabel(m_base.centralWidget());
-        m_slide2label[slide] = label;
-
-        label->setGeometry(slide->rect);
         label->setAlignment(Qt::AlignCenter);
-        updateImage(slide, label);
-        updateSelector(slide);
+        m_slide2label[slide] = label;
+        updateSlide(slide);
     }
     void updated(Model::SlidePtrC slide) override
     {
-        const auto & it = m_slide2label.find(slide);
-        if (it == m_slide2label.end())
-            return;
-        auto & label = it->second;
-
-        label->setGeometry(slide->rect);
-        updateImage(slide, label);
-        updateSelector(slide);
+        updateSlide(slide);
     }
 
+    void updateSlide(Model::SlidePtrC slide)
+    {
+        updateSelector(slide);
+        auto it = m_slide2label.find(slide);
+        if (it == m_slide2label.end())
+            return;
+        auto label = it->second;
+        label->setGeometry(slide->rect);
+        updateImage(slide, label);
+    }
     void updateImage(Model::SlidePtrC slide, QLabel * label)
     {
         const bool isReady = slide->state == Model::Slide::State::Ready;
@@ -63,11 +66,10 @@ public:
         {
             auto & selector = m_slide2selector.second;
             if (selector == nullptr)
-            {
                 selector = new Selector(m_base.centralWidget());
-            }
+
             m_slide2selector.first = slide;
-            selector->setPosition(slide->rect.center());
+            selector->setItemRect(slide->rect);
             selector->setVisible(true);
             selector->raise();
         }
@@ -91,38 +93,45 @@ MainWindow::MainWindow(
     QWidget * parent)
     : QMainWindow{parent}
     , m_ui{std::make_unique<Ui::MainWindow>()}
-    , m_observer{std::make_shared<Observer>(*this)}
     , m_slideshowCtrl{std::move(slideshowCtrl)}
     , m_slideCtrl{std::move(slideCtrl)}
+    , m_impl{std::make_shared<Impl>(*this)}
 {
     m_ui->setupUi(this);
 
-    m_slideshowCtrl->attach(m_observer);
-    m_slideCtrl->attach(m_observer);
+    m_slideshowCtrl->attach(m_impl);
+    m_slideCtrl->attach(m_impl);
 
     m_slideshowCtrl->loadSlideshow();
 }
 
 MainWindow::~MainWindow()
 {
-    m_slideshowCtrl->detach(m_observer);
+    m_slideCtrl->attach(m_impl);
+    m_slideshowCtrl->detach(m_impl);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent * e)
 {
+    Logic::SlideCtrl::Direction direction;
     switch (e->key())
     {
     case Qt::Key_Up:
-        m_slideCtrl->selectTop();
+        direction = Logic::SlideCtrl::Direction::Top;
         break;
     case Qt::Key_Down:
-        m_slideCtrl->selectBottom();
+        direction = Logic::SlideCtrl::Direction::Bottom;
         break;
     case Qt::Key_Left:
-        m_slideCtrl->selectLeft();
+        direction = Logic::SlideCtrl::Direction::Left;
         break;
     case Qt::Key_Right:
-        m_slideCtrl->selectRight();
+        direction = Logic::SlideCtrl::Direction::Right;
         break;
+    default:
+        return;
     }
+    m_slideCtrl->moveSelection(direction);
 }
+
+} // namespace Gui

@@ -2,21 +2,16 @@
 
 #include <QPen>
 #include <QRect>
-#include <QPoint>
 #include <QPainter>
 #include <QPaintEvent>
 
 
-Selector::Selector(QWidget * parent) : QWidget{parent}
+namespace Gui
 {
-    setGeometry(0, 0, m_width + 2 * m_penWidth, m_height + 2 * m_penWidth);
-}
 
-void Selector::setPosition(const QPoint & pos)
+void Selector::setItemRect(const QRect & rect)
 {
-    QRect rect = this->rect();
-    rect.moveCenter(pos);
-    setGeometry(rect);
+    setGeometry(rect.adjusted(-m_margin, -m_margin, m_margin, m_margin));
 }
 
 void Selector::paintEvent(QPaintEvent * e)
@@ -28,3 +23,5 @@ void Selector::paintEvent(QPaintEvent * e)
                      rect().width() - 2 * m_penWidth,
                      rect().height() - 2 * m_penWidth);
 }
+
+} //namespace Gui

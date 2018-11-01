@@ -9,6 +9,9 @@
 
 namespace Ui { class MainWindow; }
 
+namespace Gui
+{
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -25,8 +28,10 @@ protected:
 
 private:
     std::unique_ptr<Ui::MainWindow> m_ui;
-    class Observer;
-    std::shared_ptr<Observer> m_observer;
     Logic::SlideshowCtrlPtr m_slideshowCtrl;
     Logic::SlideCtrlPtr m_slideCtrl;
+    class Impl;
+    std::shared_ptr<Impl> m_impl;
 };
+
+} // namespace Gui

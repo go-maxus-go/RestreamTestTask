@@ -4,18 +4,16 @@
 #include <memory>
 #include <vector>
 
-#include <QRect>
 #include <QObject>
-#include <QString>
 
 #include "Obs/Fwd.h"
 #include "Model/Fwd.h"
 
 
-template<class T> class QFuture;
+class QRect;
+class QString;
 
-namespace Obs { template<class T> class Holder; }
-namespace Model { struct Slide; }
+template<class T> class QFuture;
 
 namespace Logic
 {
@@ -28,21 +26,21 @@ public:
     ~SlideCtrl();
 
 public:
-    bool addSlide(QRect rect, QString path);
+    bool addSlide(const QRect & rect, const QString & path);
 
     void attach(Obs::SlideObsPtr);
     void detach(Obs::SlideObsPtr);
 
-    void selectTop();
-    void selectLeft();
-    void selectRight();
-    void selectBottom();
+    enum class Direction { Top, Left, Right, Bottom };
+    void moveSelection(Direction);
 
 private:
+    Model::SlidePtr selectedSlide() const;
     void moveSelection(Model::SlidePtr from, Model::SlidePtr to);
 
 private slots:
-    void processLoadedImage(bool result);
+    void processLoadStarted();
+    void processImageLoaded(bool result);
 
 private:
     std::vector<Model::SlidePtr> m_slides;

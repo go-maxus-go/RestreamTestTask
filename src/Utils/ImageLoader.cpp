@@ -20,6 +20,7 @@ ImageLoader::~ImageLoader() = default;
 
 void ImageLoader::load()
 {
+    emit loadStarted();
     const bool res = m_image->load(m_path);
     if (res)
     {

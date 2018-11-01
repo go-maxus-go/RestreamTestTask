@@ -4,7 +4,9 @@
 
 #include <algorithm>
 
+#include <QRect>
 #include <QImage>
+#include <QString>
 #include <QtConcurrent/QtConcurrentRun>
 
 #include "Obs/Holder.h"
@@ -16,12 +18,13 @@
 namespace Logic
 {
 
-static int s_thumbnailSize = 90;
+namespace
+{
 
-static Model::SlidePtr findClosestSlide(Model::SlidePtr slide, std::vector<Model::SlidePtr> slides)
+Model::SlidePtr findClosestSlide(Model::SlidePtr slide, const std::vector<Model::SlidePtr> & slides)
 {
     if (slides.empty())
-        return slide;
+        return nullptr;
 
     auto minDistance = -1.0;
     auto closestSlide = *slides.begin();
@@ -41,6 +44,9 @@ static Model::SlidePtr findClosestSlide(Model::SlidePtr slide, std::vector<Model
     return closestSlide;
 }
 
+} // anonymous namespace
+
+
 SlideCtrl::SlideCtrl()
     : m_obsHolder(std::make_unique<Obs::Holder<Model::Slide>>())
 {}
@@ -54,18 +60,20 @@ SlideCtrl::~SlideCtrl()
     }
 }
 
-bool SlideCtrl::addSlide(QRect rect, QString path)
+bool SlideCtrl::addSlide(const QRect & rect, const QString & path)
 {
     auto image = std::make_shared<QImage>();
-    auto slide = std::make_shared<Model::Slide>(std::move(rect), path, image, Model::Slide::State::Added);
+    auto slide = std::make_shared<Model::Slide>(rect, path, image, Model::Slide::State::Added);
     if (m_slides.empty())
         slide->isSelected = true;
     m_slides.push_back(slide);
     m_image2slide[image] = slide;
     m_obsHolder->notifyCreated(slide);
 
-    auto loader = new Utils::ImageLoader(std::move(path), std::move(image), s_thumbnailSize, this);
-    connect(loader, &Utils::ImageLoader::loaded, this, &SlideCtrl::processLoadedImage, Qt::QueuedConnection);
+    const int thumbnailSize = qMin(rect.width(), rect.height());
+    auto loader = new Utils::ImageLoader(path, std::move(image), thumbnailSize, this);
+    connect(loader, &Utils::ImageLoader::loadStarted, this, &SlideCtrl::processLoadStarted);
+    connect(loader, &Utils::ImageLoader::loaded, this, &SlideCtrl::processImageLoaded);
 
     m_futures.emplace_back(QtConcurrent::run([loader](){ loader->load(); }));
 
@@ -81,87 +89,67 @@ void SlideCtrl::detach(Obs::SlideObsPtr obs)
     m_obsHolder->detach(obs);
 }
 
-void SlideCtrl::selectTop()
+void SlideCtrl::moveSelection(Direction direction)
 {
-    if (m_slides.empty())
-        return;
-
-    auto selectedSlideIt = std::find_if(m_slides.begin(), m_slides.end(),
-        [](const auto & v){ return v->isSelected; });
-    if (selectedSlideIt == m_slides.end())
+    auto slide = selectedSlide();
+    if (slide == nullptr)
         return; // TODO: process this case
 
-    auto selectedSlide = *selectedSlideIt;
-    std::vector<Model::SlidePtr> topSlides;
-    std::copy_if(m_slides.begin(), m_slides.end(), std::back_inserter(topSlides),
-        [&selectedSlide](const auto & v){ return selectedSlide->rect.y() > v->rect.y(); });
-
-    moveSelection(selectedSlide, findClosestSlide(selectedSlide, topSlides));
+    std::function<bool(const Model::SlidePtr &)> condition = [](auto){ return false; };
+    switch (direction)
+    {
+    case Direction::Top:
+        condition = [&slide](const auto & v){ return slide->rect.y() > v->rect.y(); };
+        break;
+    case Direction::Left:
+        condition = [&slide](const auto & v){ return slide->rect.x() > v->rect.x(); };
+        break;
+    case Direction::Right:
+        condition = [&slide](const auto & v){ return slide->rect.x() < v->rect.x(); };
+        break;
+    case Direction::Bottom:
+        condition = [&slide](const auto & v){ return slide->rect.y() < v->rect.y(); };
+        break;
+    }
+    std::vector<Model::SlidePtr> slides;
+    std::copy_if(m_slides.begin(), m_slides.end(), std::back_inserter(slides), condition);
+    moveSelection(slide, findClosestSlide(slide, slides));
 }
 
-void SlideCtrl::selectLeft()
+Model::SlidePtr SlideCtrl::selectedSlide() const
 {
     if (m_slides.empty())
-        return;
-
-    auto selectedSlideIt = std::find_if(m_slides.begin(), m_slides.end(),
+        return nullptr;
+    auto it = std::find_if(m_slides.begin(), m_slides.end(),
         [](const auto & v){ return v->isSelected; });
-    if (selectedSlideIt == m_slides.end())
-        return; // TODO: process this case
-
-    auto selectedSlide = *selectedSlideIt;
-    std::vector<Model::SlidePtr> leftSlides;
-    std::copy_if(m_slides.begin(), m_slides.end(), std::back_inserter(leftSlides),
-        [&selectedSlide](const auto & v){ return selectedSlide->rect.x() > v->rect.x(); });
-
-    moveSelection(selectedSlide, findClosestSlide(selectedSlide, leftSlides));
-}
-
-void SlideCtrl::selectRight()
-{
-    if (m_slides.empty())
-        return;
-
-    auto selectedSlideIt = std::find_if(m_slides.begin(), m_slides.end(),
-        [](const auto & v){ return v->isSelected; });
-    if (selectedSlideIt == m_slides.end())
-        return; // TODO: process this case
-
-    auto selectedSlide = *selectedSlideIt;
-    std::vector<Model::SlidePtr> rightSlides;
-    std::copy_if(m_slides.begin(), m_slides.end(), std::back_inserter(rightSlides),
-        [&selectedSlide](const auto & v){ return selectedSlide->rect.x() < v->rect.x(); });
-
-    moveSelection(selectedSlide, findClosestSlide(selectedSlide, rightSlides));
-}
-
-void SlideCtrl::selectBottom()
-{
-    if (m_slides.empty())
-        return;
-
-    auto selectedSlideIt = std::find_if(m_slides.begin(), m_slides.end(),
-        [](const auto & v){ return v->isSelected; });
-    if (selectedSlideIt == m_slides.end())
-        return; // TODO: process this case
-
-    auto selectedSlide = *selectedSlideIt;
-    std::vector<Model::SlidePtr> bottomSlides;
-    std::copy_if(m_slides.begin(), m_slides.end(), std::back_inserter(bottomSlides),
-        [&selectedSlide](const auto & v){ return selectedSlide->rect.y() < v->rect.y(); });
-
-    moveSelection(selectedSlide, findClosestSlide(selectedSlide, bottomSlides));
+    if (it == m_slides.end())
+        return nullptr;
+    return *it;
 }
 
 void SlideCtrl::moveSelection(Model::SlidePtr from, Model::SlidePtr to)
 {
+    if (from == nullptr || to == nullptr)
+        return;
+
     from->isSelected = false;
     m_obsHolder->notifyUpdated(from);
     to->isSelected = true;
     m_obsHolder->notifyUpdated(to);
 }
 
-void SlideCtrl::processLoadedImage(bool result)
+void SlideCtrl::processLoadStarted()
+{
+    auto loader = qobject_cast<Utils::ImageLoader*>(sender());
+    const auto it = m_image2slide.find(loader->image());
+    if (it == m_image2slide.end())
+        return;
+    auto & slide = it->second;
+    slide->state = Model::Slide::State::Loading;
+    m_obsHolder->notifyUpdated(slide);
+}
+
+void SlideCtrl::processImageLoaded(bool result)
 {
     sender()->deleteLater();
     auto loader = qobject_cast<Utils::ImageLoader*>(sender());

@@ -8,6 +8,7 @@
 namespace Obs
 {
 
+template<class T> class Holder;
 template<class T> struct Observer;
 
 using SlideObs = Observer<Model::Slide>;

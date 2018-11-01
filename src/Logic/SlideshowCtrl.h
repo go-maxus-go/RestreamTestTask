@@ -8,11 +8,9 @@
 #include "Fwd.h"
 
 
-namespace Obs { template<class T> class Holder; }
-namespace Model { struct Slideshow; }
-
 namespace Logic
 {
+
 class SlideCtrl;
 
 class SlideshowCtrl

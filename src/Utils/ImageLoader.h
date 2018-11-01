@@ -27,6 +27,7 @@ public:
     QImage thumbnail() const;
 
 signals:
+    bool loadStarted();
     bool loaded(bool);
 
 private:

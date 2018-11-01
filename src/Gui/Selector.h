@@ -2,21 +2,27 @@
 
 #include <QWidget>
 
-class QPoint;
+
+class QRect;
+class QPaintEvent;
+
+namespace Gui
+{
 
 class Selector : public QWidget
 {
     Q_OBJECT
 public:
-    Selector(QWidget * parent = nullptr);
+    using QWidget::QWidget;
 
-    void setPosition(const QPoint &);
+    void setItemRect(const QRect &);
 
 protected:
     void paintEvent(QPaintEvent *);
 
 private:
-    const int m_width = 100; // hardcode =(
-    const int m_height = 100;
+    const int m_margin = 10;
     const int m_penWidth = 5;
 };
+
+} // namespace Gui

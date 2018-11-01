@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     auto slideCtrl = std::make_shared<Logic::SlideCtrl>();
     auto slideshowCtrl = std::make_shared<Logic::SlideshowCtrl>(slideCtrl);
 
-    MainWindow mainWindow(slideshowCtrl, slideCtrl);
+    Gui::MainWindow mainWindow(slideshowCtrl, slideCtrl);
     mainWindow.show();
 
     return a.exec();
