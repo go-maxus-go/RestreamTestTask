@@ -54,7 +54,7 @@ public:
     void updateImage(Model::SlidePtrC slide, QLabel * label)
     {
         const bool isReady = slide->state == Model::Slide::State::Ready;
-        if (label->picture() == nullptr && isReady)
+        if (label->pixmap() == nullptr && isReady)
         {
             label->setPixmap(QPixmap::fromImage(*slide->image));
             label->setVisible(true);
@@ -107,7 +107,7 @@ MainWindow::MainWindow(
 
 MainWindow::~MainWindow()
 {
-    m_slideCtrl->attach(m_impl);
+    m_slideCtrl->detach(m_impl);
     m_slideshowCtrl->detach(m_impl);
 }
 
